@@ -32,7 +32,7 @@
 #' reverse(df_data, radius = 10)}
 reverse <- function(.data,
                     radius = NULL,
-                    limit = 3,
+                    limit = 1,
                     lang = "en",
                     osm_tag = NULL,
                     layer = NULL,
@@ -41,29 +41,29 @@ reverse <- function(.data,
                     zoom = NULL,
                     distance_sort = TRUE,
                     progress = interactive()) {
-  assert_vector(radius, "double", null = TRUE)
-  assert_vector(limit, "double", null = TRUE)
-  assert_vector(lang, "character", null = TRUE)
+  assert_vector(radius, "numeric", null = TRUE)
+  assert_vector(limit, "numeric", size = 1, null = TRUE)
+  assert_vector(lang, "character", size = 1)
   assert_vector(osm_tag, "character", null = TRUE)
   assert_vector(layer, "character", null = TRUE)
-  assert_vector(locbias_scale, "double", null = TRUE)
-  assert_vector(zoom, "double", null = TRUE)
-  assert_length(limit, null = TRUE)
+  assert_vector(locbias_scale, "numeric", size = 1, null = TRUE)
+  assert_vector(zoom, "numeric", size = 1, null = TRUE)
+  assert_range(locbias_scale, min = 0, max = 1, than = FALSE)
   assert_range(radius, 0, 5000)
   assert_flag(progress)
   progress <- progress && globally_enabled("photon_movers")
 
-  .data <- format_points(.data)
+  query <- format_points(.data)
+  gids <- group_id(query)
+  options <- list(env = environment())
 
   if (progress) {
-    cli::cli_progress_bar(name = "Geocoding", total = nrow(.data))
-    env <- environment()
+    cli::cli_progress_bar(name = "Geocoding", total = length(query))
   }
 
-  options <- list(env = environment())
-  .data$i <- seq_len(nrow(.data))
-  geocoded <- .mapply(.data, MoreArgs = options, FUN = reverse_impl)
-  as_sf(rbind_list(geocoded))
+  query$i <- seq_len(nrow(query))
+  geocoded <- .mapply(query, MoreArgs = options, FUN = reverse_impl)
+  as_sf(rbind_list(fit_original(geocoded[gids])))
 }
 
 reverse_impl <- function(i, ..., env) {
@@ -81,7 +81,6 @@ reverse_impl <- function(i, ..., env) {
     location_bias_scale = env$locbias_scale,
     zoom = env$zoom
   )
-  cbind(idx = rep(i, nrow(res)), res)
 }
 
 

@@ -4,7 +4,10 @@
 #'
 #' @param path Path to a directory to store the executable.
 #' @param version Version tag of the photon release. If \code{NULL},
-#' downloads the latest known version.
+#' downloads the latest known version. A list of all
+#' releases can be found here: \url{https://github.com/komoot/photon/releases/}.
+#' Ignored if \code{jar} is given. If \code{NULL}, uses the latest known
+#' version (Currently: `r get_latest_photon()`).
 #' @param opensearch If \code{TRUE}, downloads the OpenSearch version of
 #' photon if available. OpenSearch versions are available for photon >= 0.6.0.
 #' @inheritParams download_searchindex
@@ -22,10 +25,9 @@ download_photon <- function(path = ".",
                             only_url = FALSE,
                             quiet = FALSE) {
   assert_dir(path)
-  assert_length(path, 1)
-  assert_vector(version, "character", null = TRUE)
-  assert_length(version, 1, null = TRUE)
+  assert_vector(version, "character", size = 1, null = TRUE)
   assert_flag(opensearch)
+  assert_flag(only_url)
   assert_flag(quiet)
   version <- version %||% get_latest_photon()
 

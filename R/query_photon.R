@@ -1,10 +1,19 @@
 query_photon <- function(endpoint, ...) {
-  args <- drop_na(list(...))
+  args <- drop_null(drop_na(list(...)))
   req <- httr2::request(get_photon_url())
   req <- httr2::req_template(req, "GET {endpoint}")
-  req <- do.call(httr2::req_url_query, c(list(.req = req), args))
+  req <- do.call(
+    httr2::req_url_query,
+    c(list(.req = req, .multi = "explode"), args)
+  )
   req <- throttle(req)
   req <- httr2::req_retry(req, max_tries = getOption("photon_max_tries", 3))
+  req <- httr2::req_error(req, body = function(resp) {
+    ctype <- httr2::resp_content_type(resp)
+    if (grepl("json", ctype, fixed = TRUE)) {
+      httr2::resp_body_json(resp)$message
+    }
+  })
 
   if (globally_enabled("photon_debug")) {
     cli::cli_inform("GET {req$url}") # nocov

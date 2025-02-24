@@ -7,7 +7,7 @@
 reverse(
   .data,
   radius = NULL,
-  limit = 3,
+  limit = 1,
   lang = "en",
   osm_tag = NULL,
   layer = NULL,
@@ -25,9 +25,13 @@ an \code{sfc} or \code{sf} object containing point geometries.}
 \item{radius}{Numeric specifying the range around the points in \code{.data}
 that is used for searching.}
 
-\item{limit}{Number of results to return. Defaults to 3.}
+\item{limit}{Number of results to return. A maximum of 50 results can be
+returned for a single search term. Defaults to 1. When more than a single
+text is provided but limit is greater than 1, the results can be uniquely
+linked to the input texts using the \code{idx} column in the output.}
 
-\item{lang}{Language of the results.}
+\item{lang}{Language of the results. If \code{"default"}, returns the results
+in local language.}
 
 \item{osm_tag}{Character string giving an
 \href{https://wiki.openstreetmap.org/wiki/Tags}{OSM tag} to filter the
@@ -47,7 +51,7 @@ through \code{zoom} and the weight of place prominence through
 
 \item{locbias_scale}{Numeric vector specifying the importance of prominence
 in \code{locbias}. A higher prominence scale gives more weight to important
-places. Defaults to 0.2.}
+places. Possible values range from 0 to 1. Defaults to 0.2.}
 
 \item{zoom}{Numeric specifying the radius for which the \code{locbias} is
 effective. Corresponds to the zoom level in OpenStreetMap. The exact relation
@@ -63,24 +67,24 @@ based on the distance to the input point. Defaults to \code{TRUE}.}
 An sf dataframe or tibble containing the following columns:
 
 \itemize{
- \item{\code{idx}: Internal ID specifying the index of the \code{texts}
- parameter.}
- \item{\code{osm_type}: Type of OSM element, one of N (node), W (way),
- R (relation), or P (polygon).}
- \item{\code{osm_id}: OpenStreetMap ID of the matched element.}
- \item{\code{country}: Country of the matched place.}
- \item{\code{city}: City of the matched place.}
- \item{\code{osm_key}: OpenStreetMap key.}
- \item{\code{countrycode}: ISO2 country code.}
- \item{\code{housenumber}: House number, if applicable.}
- \item{\code{postcode}: Post code, if applicable.}
- \item{\code{locality}: Locality, if applicable.}
- \item{\code{street}: Street, if applicable.}
- \item{\code{district}: District name, if applicable.}
- \item{\code{osm_value}: OpenStreetMap tag value.}
- \item{\code{name}: Place name.}
- \item{\code{type}: Layer type as described for the \code{layer} parameter.}
- \item{\code{extent}: Boundary box of the match.}
+\item{\code{idx}: Internal ID specifying the index of the \code{texts}
+parameter.}
+\item{\code{osm_type}: Type of OSM element, one of N (node), W (way),
+R (relation), or P (polygon).}
+\item{\code{osm_id}: OpenStreetMap ID of the matched element.}
+\item{\code{country}: Country of the matched place.}
+\item{\code{city}: City of the matched place.}
+\item{\code{osm_key}: OpenStreetMap key.}
+\item{\code{countrycode}: ISO2 country code.}
+\item{\code{housenumber}: House number, if applicable.}
+\item{\code{postcode}: Post code, if applicable.}
+\item{\code{locality}: Locality, if applicable.}
+\item{\code{street}: Street, if applicable.}
+\item{\code{district}: District name, if applicable.}
+\item{\code{osm_value}: OpenStreetMap tag value.}
+\item{\code{name}: Place name.}
+\item{\code{type}: Layer type as described for the \code{layer} parameter.}
+\item{\code{extent}: Boundary box of the match.}
 }
 }
 \description{
@@ -93,12 +97,12 @@ Filtering by OpenStreetMap tags follows a distinct syntax explained on
 \url{https://github.com/komoot/photon}. In particular:
 
 \itemize{
- \item{Include places with tag: \code{key:value}}
- \item{Exclude places with tag: \code{!key:value}}
- \item{Include places with tag key: \code{key}}
- \item{Include places with tag value: \code{:value}}
- \item{Exclude places with tag key: \code{!key}}
- \item{Exclude places with tag value: \code{:!value}}
+\item{Include places with tag: \code{key:value}}
+\item{Exclude places with tag: \code{!key:value}}
+\item{Include places with tag key: \code{key}}
+\item{Include places with tag value: \code{:value}}
+\item{Exclude places with tag key: \code{!key}}
+\item{Exclude places with tag value: \code{:!value}}
 }
 }
 \examples{

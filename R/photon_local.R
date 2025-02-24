@@ -59,15 +59,15 @@ photon_local <- R6::R6Class(
     #' executable, the search index, and Java.
     #'
     #' @param path Path to a directory where the photon executable and data
-    #' should be stored. Defaults to a directory "photon" in the current
-    #' working directory.
+    #' should be stored.
     #' @param photon_version Version of photon to be used. A list of all
     #' releases can be found here: \url{https://github.com/komoot/photon/releases/}.
     #' Ignored if \code{jar} is given. If \code{NULL}, uses the latest known
-    #' version.
+    #' version (Currently: `r get_latest_photon()`).
     #' @param country Character string that can be identified by
     #' \code{\link[countrycode]{countryname}} as a country. An extract for this
-    #' country will be downloaded. If \code{NULL}, downloads a global search index.
+    #' country will be downloaded. If \code{"planet"}, downloads a global search
+    #' index.
     #' @param date Character string or date-time object used to specify the creation
     #' date of the search index. If \code{"latest"}, will download the file tagged
     #' with "latest". If a character string, the value should be parseable by
@@ -233,14 +233,14 @@ photon_local <- R6::R6Class(
                       timeout = 60,
                       java_opts = NULL,
                       photon_opts = NULL) {
-      assert_vector(host, "character")
-      assert_vector(database, "character")
-      assert_vector(user, "character")
-      assert_vector(password, "character")
+      assert_vector(host, "character", size = 1)
+      assert_vector(database, "character", size = 1)
+      assert_vector(user, "character", size = 1)
+      assert_vector(password, "character", size = 1)
       assert_vector(languages, "character", null = TRUE)
       assert_vector(countries, "character", null = TRUE)
       assert_vector(extra_tags, "character", null = TRUE)
-      assert_vector(timeout, "double")
+      assert_vector(timeout, "numeric", size = 1)
       assert_vector(java_opts, "character", null = TRUE)
       assert_vector(photon_opts, "character", null = TRUE)
       assert_flag(structured)
@@ -320,6 +320,16 @@ photon_local <- R6::R6Class(
       private$host <- host
       private$port <- port
       private$ssl <- ssl
+
+      if (self$is_ready()) {
+        ph_stop(
+          c(
+            "A photon instance is already running on {.url {self$get_url()}}.",
+            "i" = "You can try to use a different port using `$start(port = ...)`."
+          ),
+          class = "photon_already_running"
+        )
+      }
 
       popts <- cmd_options(listen_ip = host, listen_port = port)
       cleanup <- function(e) self$stop()
@@ -565,16 +575,18 @@ store_searchindex_metadata <- function(path, archive_path) {
     x = basename(archive_path),
     proto = data.frame(country = character(), date = character())
   )
-  meta$date <- ifelse(
-    identical(meta$date, "latest"),
-    meta$date,
-    as.POSIXct(meta$date, format = "%y%m%d")
-  )
+
+  # if a date is missing from the file name, set the current date
+  meta$date <- if (identical(meta$date, "latest")) Sys.Date() else meta$date
+  meta$date <- as.POSIXct(meta$date, format = "%y%m%d")
+
+  # if a country is missing from the file name, it is likely global
   meta$country <- ifelse(
     nzchar(meta$country),
     countrycode::countrycode(meta$country, "iso2c", "country.name"),
     "global"
   )
+
   saveRDS(meta, file.path(path, "photon_data", "rmeta.rds"))
 }
 

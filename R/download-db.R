@@ -20,8 +20,8 @@
 #' @param section Subdirectory of the download server from which to select a
 #' search index. If \code{"experimental"}, selects a dump made for the master
 #' version of photon. If \code{"archived"}, selects a dump made for an older
-#' version of photon. If \code{NULL}, selects a dump made for the current
-#' release. Defaults to \code{NULL}.
+#' version of photon. If \code{NULL} (or any arbitrary string), selects a
+#' dump made for the current release. Defaults to \code{NULL}.
 #' @param only_url If \code{TRUE}, performs a download. Otherwise,
 #' only returns a link to the file.
 #' @param quiet If \code{TRUE}, suppresses all informative messages.
@@ -68,11 +68,10 @@ download_searchindex <- function(path = ".",
                                  section = NULL,
                                  only_url = FALSE,
                                  quiet = FALSE) {
-  assert_length(country, 1, null = TRUE)
-  assert_length(date, 1, null = TRUE)
-  assert_length(exact, 1)
-  assert_vector(country, "character")
+  assert_vector(country, "character", size = 1, null = TRUE)
+  assert_vector(date, size = 1, null = TRUE)
   assert_flag(exact)
+
   is_planet <- identical(country, "planet")
   req <- httr2::request("https://download1.graphhopper.com/public/")
   req <- httr2::req_url_path_append(req, switch(

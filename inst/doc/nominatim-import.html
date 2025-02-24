@@ -60,7 +60,7 @@ div.sourceCode { overflow: auto; }
 }
 @media print {
 pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
 { counter-reset: source-line 0; }
@@ -406,9 +406,9 @@ given photon directory.</p>
 <span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a><span class="co">#&gt; ℹ java version &quot;22&quot; 2024-03-19</span></span>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a><span class="co">#&gt; ℹ Java(TM) SE Runtime Environment (build 22+36-2370)</span></span>
 <span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a><span class="co">#&gt; ℹ Java HotSpot(TM) 64-Bit Server VM (build 22+36-2370, mixed mode, sharing)</span></span>
-<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt; ✔ Successfully downloaded photon 0.5.0. [8.2s]        </span></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a><span class="co">#&gt; ✔ Successfully downloaded photon 0.6.2. [8.2s]        </span></span>
 <span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a><span class="co">#&gt; ℹ No search index downloaded! Download one or import from a Nominatim database.</span></span>
-<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; • Version: 0.5.0</span></span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a><span class="co">#&gt; • Version: 0.6.2</span></span>
 <span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a></span>
 <span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>photon<span class="sc">$</span><span class="fu">import</span>(<span class="at">host =</span> <span class="st">&quot;localhost&quot;</span>, <span class="at">password =</span> <span class="st">&quot;MNdtC2*pP#aMbe&quot;</span>)</span>
 <span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a><span class="co">#&gt; 2024-10-24 23:07:35,904 [main] WARN  org.elasticsearch.node.Node - version [5.6.16-SNAPSHOT] is a pre-release version of Elasticsearch and is not suitable for production</span></span>
@@ -423,7 +423,7 @@ given photon directory.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>photon<span class="sc">$</span><span class="fu">start</span>()</span>
 <span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a><span class="co">#&gt; 2024-10-24 23:26:46,360 [main] WARN  org.elasticsearch.node.Node - version [5.6.16-SNAPSHOT] is a pre-release version of Elasticsearch and is not suitable for production</span></span>
 <span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a><span class="co">#&gt; ✔ Photon is now running. [11.1s]</span></span></code></pre></div>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">geocode</span>(<span class="st">&quot;Apia&quot;</span>)</span>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">geocode</span>(<span class="st">&quot;Apia&quot;</span>, <span class="at">limit =</span> <span class="dv">3</span>)</span>
 <span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="co">#&gt; Simple feature collection with 3 features and 13 fields</span></span>
 <span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="co">#&gt; Geometry type: POINT</span></span>
 <span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="co">#&gt; Dimension:     XY</span></span>
@@ -469,7 +469,7 @@ detailed data structure we provide.</p>
 <span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">state =</span> <span class="fu">c</span>(<span class="st">&quot;Tuamasaga&quot;</span>, <span class="st">&quot;Tuamasaga&quot;</span>, <span class="st">&quot;Atua&quot;</span>)</span>
 <span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>)</span>
 <span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a></span>
-<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="fu">structured</span>(place_data, <span class="at">limit =</span> <span class="dv">1</span>)</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a><span class="fu">structured</span>(place_data)</span>
 <span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a><span class="co">#&gt; Simple feature collection with 3 features and 14 fields</span></span>
 <span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a><span class="co">#&gt; Geometry type: POINT</span></span>
 <span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="co">#&gt; Dimension:     XY</span></span>

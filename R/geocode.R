@@ -4,8 +4,12 @@
 #' generally less accurate than \link[=structured]{structured geocoding}.
 #'
 #' @param texts Character vector of a texts to geocode.
-#' @param limit Number of results to return. Defaults to 3.
-#' @param lang Language of the results.
+#' @param limit Number of results to return. A maximum of 50 results can be
+#' returned for a single search term. Defaults to 1. When more than a single
+#' text is provided but limit is greater than 1, the results can be uniquely
+#' linked to the input texts using the \code{idx} column in the output.
+#' @param lang Language of the results. If \code{"default"}, returns the results
+#' in local language.
 #' @param bbox Any object that can be parsed by \code{\link[sf]{st_bbox}}.
 #' Results must lie within this bbox.
 #' @param osm_tag Character string giving an
@@ -23,11 +27,17 @@
 #' \code{location_bias_scale}.
 #' @param locbias_scale Numeric vector specifying the importance of prominence
 #' in \code{locbias}. A higher prominence scale gives more weight to important
-#' places. Defaults to 0.2.
+#' places. Possible values range from 0 to 1. Defaults to 0.2.
 #' @param zoom Numeric specifying the radius for which the \code{locbias} is
 #' effective. Corresponds to the zoom level in OpenStreetMap. The exact relation
 #' to \code{locbias} is \eqn{0.25\text{ km} \cdot 2^{(18 - \text{zoom})}}.
 #' Defaults to 16.
+#' @param latinize If \code{TRUE} sanitizes search terms in \code{texts} by
+#' converting their encoding to \code{"latin1"} using \code{\link{latinize}}.
+#' This can be helpful if the search terms contain certain symbols (e.g. fancy
+#' quotes) that photon cannot handle properly. Defaults to \code{TRUE} as
+#' \code{latinize} is very conservative and should usually not cause any
+#' problems.
 #' @param progress If \code{TRUE}, shows a progress bar for longer queries.
 #'
 #' @returns An sf dataframe or tibble containing the following columns:
@@ -97,9 +107,13 @@
 #' geocode("Berlin", osm_tag = "!tourism")
 #'
 #' # use location biases to match Berlin, IL instead of Berlin, DE
-#' geocode("Berlin", locbias = c(-100, 40), locbias_scale = 0.1, zoom = 7, osm_tag = "place")}
+#' geocode("Berlin", locbias = c(-100, 40), locbias_scale = 0.1, zoom = 7, osm_tag = "place")
+#'
+#' # latinization can help normalize search terms
+#' geocode("Luatuanu\u2019u", latinize = FALSE) # fails
+#' geocode("Luatuanu\u2019u", latinize = TRUE)  # works}
 geocode <- function(texts,
-                    limit = 3,
+                    limit = 1,
                     lang = "en",
                     bbox = NULL,
                     osm_tag = NULL,
@@ -107,38 +121,40 @@ geocode <- function(texts,
                     locbias = NULL,
                     locbias_scale = NULL,
                     zoom = NULL,
+                    latinize = TRUE,
                     progress = interactive()) {
   assert_vector(texts, "character")
-  assert_vector(limit, "double", null = TRUE)
-  assert_vector(lang, "character", null = TRUE)
+  assert_vector(limit, "numeric", size = 1, null = TRUE)
+  assert_vector(lang, "character", size = 1)
   assert_vector(osm_tag, "character", null = TRUE)
   assert_vector(layer, "character", null = TRUE)
-  assert_vector(locbias_scale, "double", null = TRUE)
-  assert_vector(zoom, "double", null = TRUE)
-  assert_length(limit, null = TRUE)
-  assert_length(lang, null = TRUE)
-  assert_length(layer, null = TRUE)
+  assert_vector(locbias_scale, "numeric", size = 1, null = TRUE)
+  assert_vector(zoom, "numeric", size = 1, null = TRUE)
   assert_range(locbias_scale, min = 0, max = 1, than = FALSE)
   assert_flag(progress)
+  assert_flag(latinize)
   progress <- progress && globally_enabled("photon_movers")
 
   locbias <- format_locbias(locbias)
   bbox <- format_bbox(bbox)
+  query <- unique(texts)
+  gids <- group_id(texts, query)
+  if (latinize) query <- latinize(query)
+  options <- list(env = environment())
 
   if (progress) {
-    cli::cli_progress_bar(name = "Geocoding", total = length(texts))
+    cli::cli_progress_bar(name = "Geocoding", total = length(query))
   }
 
-  options <- list(env = environment())
-  iter <- list(q = texts, i = seq_len(length(texts)))
+  iter <- list(q = query, i = seq_len(length(query)))
   geocoded <- .mapply(iter, MoreArgs = options, FUN = geocode_impl)
-  as_sf(rbind_list(geocoded))
+  as_sf(rbind_list(fit_original(geocoded[gids])))
 }
 
 
 geocode_impl <- function(q, i, env, progress) {
   if (env$progress) cli::cli_progress_update(.envir = env)
-  res <- query_photon(
+  query_photon(
     endpoint = "api",
     q = q,
     limit = env$limit,
@@ -151,7 +167,6 @@ geocode_impl <- function(q, i, env, progress) {
     location_bias_scale = env$locbias_scale,
     zoom = env$zoom
   )
-  cbind(idx = rep(i, nrow(res)), res)
 }
 
 
@@ -170,4 +185,34 @@ format_locbias <- function(locbias) {
     locbias = list(lon = locbias[1], lat = locbias[2])
   }
   locbias
+}
+
+
+fit_original <- function(res) {
+  lapply(seq_along(res), augment_response, res)
+}
+
+
+augment_response <- function(i, res) {
+  x <- res[[i]]
+  n <- nrow(x)
+  cbind(idx = rep(i, n + !n), if (n) x else res_proto())
+}
+
+
+res_proto <- function() {
+  extent <- list(
+    osm_type = NA_character_,
+    osm_id = NA_integer_,
+    country = NA_character_,
+    osm_key = NA_character_,
+    countrycode = NA_character_,
+    osm_value = NA_character_,
+    name = NA_character_,
+    type = NA_character_,
+    extent = list(rep(NA_real_, 4))
+  )
+  attr(extent, "row.names") <- 1L
+  attr(extent, "class") <- "data.frame"
+  sf::st_sf(extent, geometry = sf::st_sfc(sf::st_point(), crs = 4326))
 }

@@ -57,7 +57,7 @@
 #' structured(safune, limit = 1)
 #' }
 structured <- function(.data,
-                       limit = 3,
+                       limit = 1,
                        lang = "en",
                        bbox = NULL,
                        osm_tag = NULL,
@@ -73,31 +73,30 @@ structured <- function(.data,
   cols <- c("street", "housenumber", "postcode", "city", "county", "state", "countrycode")
   assert_class(.data, c("data.frame", "list"))
   assert_named(.data, cols)
-  assert_vector(limit, "double", null = TRUE)
-  assert_vector(lang, "character", null = TRUE)
+  assert_vector(limit, "numeric", size = 1, null = TRUE)
+  assert_vector(lang, "character", size = 1)
   assert_vector(osm_tag, "character", null = TRUE)
   assert_vector(layer, "character", null = TRUE)
-  assert_vector(locbias_scale, "double", null = TRUE)
-  assert_vector(zoom, "double", null = TRUE)
-  assert_length(limit, null = TRUE)
-  assert_length(lang, null = TRUE)
-  assert_length(layer, null = TRUE)
+  assert_vector(locbias_scale, "numeric", size = 1, null = TRUE)
+  assert_vector(zoom, "numeric", size = 1, null = TRUE)
+  assert_range(locbias_scale, min = 0, max = 1, than = FALSE)
   assert_flag(progress)
   progress <- progress && globally_enabled("photon_movers")
 
   locbias <- format_locbias(locbias)
   bbox <- format_bbox(bbox)
-  .data <- as.data.frame(.data)
+  cols <- intersect(cols, names(.data))
+  query <- as.data.frame(.data)[cols]
+  gids <- group_id(query)
+  options <- list(env = environment())
 
   if (progress) {
-    cli::cli_progress_bar(name = "Geocoding", total = nrow(.data))
-    env <- environment()
+    cli::cli_progress_bar(name = "Geocoding", total = length(query))
   }
 
-  options <- list(env = environment())
-  .data$i <- seq_len(nrow(.data))
-  geocoded <- .mapply(.data, MoreArgs = options, FUN = structured_impl)
-  as_sf(rbind_list(geocoded))
+  query$i <- seq_len(nrow(query))
+  geocoded <- .mapply(query, MoreArgs = options, FUN = structured_impl)
+  as_sf(rbind_list(fit_original(geocoded[gids])))
 }
 
 
@@ -116,7 +115,6 @@ structured_impl <- function(i, ..., env) {
     location_bias_scale = env$locbias_scale,
     zoom = env$zoom
   )
-  cbind(idx = rep(i, nrow(res)), res)
 }
 
 
