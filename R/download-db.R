@@ -1,13 +1,14 @@
 #' Download search index
 #' @description
-#' Finds and downloads the Elasticsearch index database necessary to set up
+#' Finds and downloads the OpenSearch index database necessary to set up
 #' Photon locally.
 #'
-#' @param path Path to a directory where the identified file should be stored.
 #' @param country Character string that can be identified by
 #' \code{\link[countrycode]{countryname}} as a country. An extract for this
 #' country will be downloaded. If \code{"planet"}, downloads a global search
-#' index.
+#' index (see note).
+#' @param path Path to a directory where the identified file should be stored.
+#' Defaults to \code{tempdir()}.
 #' @param date Character string or date-time object used to specify the creation
 #' date of the search index. If \code{"latest"}, will download the file tagged
 #' with "latest". If a character string, the value should be parseable by
@@ -28,6 +29,22 @@
 #' @returns If \code{only_url = FALSE}, returns the local path to the downloaded
 #' file. Otherwise, returns the URL to the remote file.
 #'
+#' @section Limitations:
+#' The index download depends on a public repository
+#' (\url{https://download1.graphhopper.com/public/}). This repository only
+#' hosts search indices for the latest stable and experimental versions and
+#' is thus not suitable for reproducibility. If you wish to make a project
+#' reproducible, consider storing the search index somewhere persistent.
+#' Photon is generally not backwards-compatible and newer versions of Photon
+#' are not guaranteed to work with older search indices (based on personal
+#' experience).
+#'
+#' Additionally, this function can only download pre-built search indices
+#' from country extracts. If you need a more fine-grained scope or a combination
+#' of multiple countries, you need to build your own search index. See
+#' \code{vignette("nominatim-import", package = "photon")}.
+#'
+#'
 #' @note
 #' Depending on the country, search index databases tend to be very large.
 #' The global search index is about 75 GB of size (10/2024). Keep that in mind
@@ -37,17 +54,17 @@
 #'
 #' @examples
 #' \donttest{# download the latest extract of Monaco
-#' download_searchindex(path = tempdir())
+#' download_searchindex("Monaco", path = tempdir())
 #'
 #' # download the latest extract of American Samoa
-#' download_searchindex(path = tempdir(), country = "Samoa")
+#' download_searchindex(path = tempdir(), section = NULL, country = "Samoa")
 #'
 #' # download an extract from a month ago
-#' download_searchindex(
+#' try(download_searchindex(
 #'   path = tempdir(),
 #'   country = "Monaco",
 #'   date = Sys.time() - 2629800
-#'  )
+#' ))
 #'
 #' # if possible, download an extract from today
 #' try(download_searchindex(
@@ -61,8 +78,8 @@
 #' # NOTE: the file to be downloaded is several tens of gigabytes of size!
 #' \dontrun{
 #' download_searchindex(path = tempdir(), country = "planet")}
-download_searchindex <- function(path = ".",
-                                 country = "Monaco",
+download_searchindex <- function(country,
+                                 path = tempdir(),
                                  date = "latest",
                                  exact = FALSE,
                                  section = NULL,
@@ -162,6 +179,12 @@ download_searchindex <- function(path = ".",
     )
   }
 
+  req <- httr2::req_error(req, body = function(resp) {
+    status <- httr2::resp_status(resp)
+    if (identical(status, 404L)) {
+      sprintf("This usually means that country %s is not available.", country)
+    }
+  })
 
   httr2::req_perform(req, path = path)
   normalizePath(path, "/")

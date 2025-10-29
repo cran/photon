@@ -15,13 +15,26 @@ run_photon <- function(self,
   switch(
     mode,
     import = run_import(self, private, args, timeout, quiet),
-    start = run_start(self, private, args, timeout, quiet)
+    start = run_start(self, private, args, timeout, quiet),
+    help = run_help(self, private, args)
+  )
+}
+
+
+run_help <- function(self, private, args) {
+  run(
+    "java",
+    args = args,
+    stdout = "|",
+    stderr = "|",
+    echo_cmd = globally_enabled("photon_debug"),
+    wd = self$path,
+    error_on_status = FALSE
   )
 }
 
 
 run_import <- function(self, private, args, timeout = 60, quiet = FALSE) {
-  logs <- list()
   stderr <- run(
     "java",
     args = args,
@@ -36,7 +49,8 @@ run_import <- function(self, private, args, timeout = 60, quiet = FALSE) {
   )$stderr
 
   versionize_logs(private)
-  abort_log_error(stderr, quiet, class = "import_error")
+  log_error <- assemble_log_error(private$logs)
+  abort_log_error(log_error, quiet, class = "import_error")
 }
 
 
@@ -146,7 +160,7 @@ handle_log_conditions <- function(out) {
   is_usage_error <- grepl("Usage: <main class> [options]", out, fixed = TRUE)
   is_warning <- log$type %in% "WARN"
   is_exception <- grepl("exception", log$msg, ignore.case = TRUE) &
-                     log$class %in% "stderr" | is.na(log$type)
+                     (log$class %in% "stderr" | is.na(log$type))
 
   if (any(is_warning) && globally_enabled("photon_setup_warn")) {
     for (msg in log$msg[is_warning]) cli::cli_warn(msg)
@@ -173,7 +187,8 @@ handle_log_conditions <- function(out) {
 
 
 split_by_logs_entry <- function(logs) {
-  rgx <- "(?<=\n)(?=Usage|[0-9]{4}-[0-9]{1,2}-[0-9]{1,2})"
+  logs <- gsub("\r\n", "\n", logs, fixed = TRUE) # normalize new lines
+  rgx <- "(?<=\n)(?=Usage|Exception|\\[?[0-9]{4}-[0-9]{1,2}-[0-9]{1,2})"
   logs <- strsplit(logs, rgx, perl = TRUE)[[1]]
   unlist(logs)
 }
@@ -190,22 +205,27 @@ parse_log_line <- function(line) {
     proto = list(ts = "", thread = "", type = "", class = "", msg = "")
   )
 
-  if (all(is.na(parsed))) {
-    parsed <- utils::strcapture(
+  missing <- is.na(parsed$msg)
+  if (any(missing)) {
+    parsed[missing, c("ts", "type", "class", "msg")] <- utils::strcapture(
       "\\[(.+)\\]\\[(.+)\\]\\[([a-zA-Z.]+) *?\\](.+)",
-      line,
+      line[missing],
       proto = list(ts = "", type = "", class = "", msg = "")
     )
   }
 
-  if (all(is.na(parsed))) {
-    parsed <- data.frame(
+  missing <- is.na(parsed$msg)
+  if (any(missing)) {
+    fallback <- data.frame(
       ts = NA_character_,
       thread = NA_character_,
       type = NA_character_,
       class = NA_character_,
-      msg = line
+      msg = line[missing]
     )
+    fallback <- fallback[rep(1, sum(missing)), ]
+    row.names(fallback) <- NULL
+    parsed[missing, ] <- fallback
   }
 
   parsed$type <- trimws(parsed$type)
@@ -243,7 +263,7 @@ abort_log_error <- function(logerr, quiet, ...) {
     if (!quiet) cli::cli_verbatim(logerr)
     ph_stop(c(
       strsplit(logerr, "\n")[[1]][1],
-      "i" = "See logs for details."
+      "i" = cli::style_bold("See logs for details.")
     ), ..., call = NULL)
   }
 }
@@ -279,13 +299,13 @@ photon_ready <- function(self, private) {
     return(FALSE)
   }
 
-  can_access_photon(self$get_url())
+  can_access_photon(self$get_url(), "api")
 }
 
 
-can_access_photon <- function(url) {
+can_access_photon <- function(url, path) {
   req <- httr2::request(url)
-  req <- httr2::req_template(req, "GET api")
+  req <- httr2::req_template(req, sprintf("GET %s", path))
   req <- httr2::req_error(req, is_error = function(r) FALSE)
 
   status <- tryCatch(

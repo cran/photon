@@ -5,24 +5,26 @@
 \title{Download photon}
 \usage{
 download_photon(
-  path = ".",
+  path = tempdir(),
   version = NULL,
-  opensearch = FALSE,
+  opensearch = TRUE,
   only_url = FALSE,
   quiet = FALSE
 )
 }
 \arguments{
-\item{path}{Path to a directory to store the executable.}
+\item{path}{Path to a directory to store the executable. Defaults to
+\code{tempdir()}.}
 
 \item{version}{Version tag of the photon release. If \code{NULL},
-downloads the latest known version. A list of all
+downloads the latest known version (0.7.4). A list of all
 releases can be found here: \url{https://github.com/komoot/photon/releases/}.
-Ignored if \code{jar} is given. If \code{NULL}, uses the latest known
-version (Currently: 0.6.2).}
+Ignored if \code{jar} is given.}
 
 \item{opensearch}{If \code{TRUE}, downloads the OpenSearch version of
-photon if available. OpenSearch versions are available for photon >= 0.6.0.}
+photon if available. OpenSearch versions are available for photon >= 0.6.0.
+Since photon >= 0.7.0, OpenSearch versions are recommended. Defaults to
+\code{TRUE}.}
 
 \item{only_url}{If \code{TRUE}, performs a download. Otherwise,
 only returns a link to the file.}
@@ -37,5 +39,5 @@ path to the downloaded file. Otherwise, returns the URL to be downloaded.
 Download the photon executable from GitHub.
 }
 \examples{
-\donttest{download_photon(tempdir(), version = "0.4.1")}
+\donttest{download_photon(tempdir(), version = "0.4.1", opensearch = FALSE)}
 }

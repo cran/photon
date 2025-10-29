@@ -6,26 +6,28 @@
 \description{
 This R6 class is used to initialize and manage local photon instances.
 It can download and setup the Java, the photon executable, and the necessary
-ElasticSearch search index. It can start, stop, and query the status of the
-photon instance. It is also the basis for geocoding requests at it is used
+OpenSearch index. It can start, stop, and query the status of the
+photon instance. It is also the basis for geocoding requests as it is used
 to retrieve the URL for geocoding.
 }
-\section{ElasticSearch / OpenSearch}{
+\section{Search indices}{
 
-The standard version of photon uses ElasticSearch indices to geocode.
-These search indices can be self-provided by importing an existing
+Search indices can be self-provided by importing an existing
 Nominatim database or they can be downloaded from the
 \href{https://nominatim.org/2020/10/21/photon-country-extracts.html}{Photon download server}.
-Use \code{nominatim = TRUE} to indicate that no ElasticSearch indices
-should be downloaded. See
+If you want to download pre-built search indices, simply provide a
+\code{country} string during initialization or use the
+\code{$download_data} method. Pre-built search indices do not come with
+support for structured geocoding.
+
+If you want to build from Nominatim, do not
+provide a country string and use the \code{$import} method. See
 \code{vignette("nominatim-import", package = "photon")} for details on how
 to import from Nominatim.
 
 To enable structured geocoding, the photon geocoder needs to be built to
-support OpenSearch. Since photon 0.6.0, OpenSearch jar files are included
-in the photon releases. OpenSearch indices can also be downloaded, but
-do not support structured geocoding as of yet. To enable structured
-geocoding, indices have to be imported from an existing Nominatim database.
+support OpenSearch. Since photon 0.7.0, OpenSearch jar files are the
+standard and ElasticSearch is deprecated.
 }
 
 \examples{
@@ -36,15 +38,17 @@ dir <- file.path(tempdir(), "photon")
 photon <- new_photon(path = dir, country = "Monaco")
 
 # start a new instance with an older photon version
-photon <- new_photon(path = dir, photon_version = "0.4.1")}
+photon <- new_photon(path = dir, photon_version = "0.4.1", opensearch = FALSE)
+}
 
 \dontrun{
 # import a nominatim database using OpenSearch photon
 # this example requires the OpenSearch version of photon and a running
 # Nominatim server.
 photon <- new_photon(path = dir, opensearch = TRUE)
-photon$start(photon_options = cmd_options(port = 29146, password = "pgpass"))}
-}
+photon$import(photon_options = cmd_options(port = 29146, password = "pgpass"))}
+
+photon$purge(ask = FALSE)}
 }
 \section{Super class}{
 \code{\link[photon:photon]{photon::photon}} -> \code{photon_local}
@@ -65,6 +69,7 @@ external process running photon.}
 \item \href{#method-photon_local-new}{\code{photon_local$new()}}
 \item \href{#method-photon_local-mount}{\code{photon_local$mount()}}
 \item \href{#method-photon_local-info}{\code{photon_local$info()}}
+\item \href{#method-photon_local-help}{\code{photon_local$help()}}
 \item \href{#method-photon_local-purge}{\code{photon_local$purge()}}
 \item \href{#method-photon_local-import}{\code{photon_local$import()}}
 \item \href{#method-photon_local-start}{\code{photon_local$start()}}
@@ -91,8 +96,9 @@ executable, the search index, and Java.
   country = NULL,
   date = "latest",
   exact = FALSE,
-  section = NULL,
-  opensearch = FALSE,
+  section = "experimental",
+  opensearch = TRUE,
+  mount = TRUE,
   overwrite = FALSE,
   quiet = FALSE
 )}\if{html}{\out{</div>}}
@@ -107,7 +113,7 @@ should be stored.}
 \item{\code{photon_version}}{Version of photon to be used. A list of all
 releases can be found here: \url{https://github.com/komoot/photon/releases/}.
 Ignored if \code{jar} is given. If \code{NULL}, uses the latest known
-version (Currently: 0.6.2).}
+version (Currently: 0.7.4).}
 
 \item{\code{country}}{Character string that can be identified by
 \code{\link[countrycode]{countryname}} as a country. An extract for this
@@ -131,12 +137,19 @@ version of photon. If \code{"archived"}, selects a dump made for an older
 version of photon. If \code{NULL} (or any arbitrary string), selects a
 dump made for the current release. Defaults to \code{NULL}.}
 
-\item{\code{opensearch}}{If \code{TRUE}, looks for an OpenSearch version of
-photon in the specified path. Opensearch-based photon supports structured
-geocoding queries but has to be built manually using gradle. Hence,
-it cannot be downloaded directly. If no OpenSearch executable is found
-in the search path, then this parameter is set to \code{FALSE}. Defaults
-to \code{FALSE}.}
+\item{\code{opensearch}}{Superseded for photon versions >= 0.7.0. If \code{TRUE},
+attempts to download the OpenSearch version of photon. OpenSearch-based
+photon supports structrued geocoding. Readily available OpenSearch
+photon executables are only offered since photon version 0.6.0. For
+earlier versions, you need to build from source using gradle. In this
+case, if \code{TRUE}, will look for an OpenSearch version of photon in
+the specified path. Since photon version 0.7.0, OpenSearch is the
+recommended option. Defaults to \code{TRUE}.}
+
+\item{\code{mount}}{If \code{TRUE}, mounts the object to the session so that
+functions like \code{\link{geocode}} automatically detect the new
+instance. If \code{FALSE}, initializies the instance but doesn't mount
+it to the session. Defaults to \code{TRUE}.}
 
 \item{\code{overwrite}}{If \code{TRUE}, overwrites existing jar files and
 search indices when initializing a new instance. Defaults to
@@ -164,7 +177,7 @@ is useful if you want to switch between multiple photon instances.
 \if{latex}{\out{\hypertarget{method-photon_local-info}{}}}
 \subsection{Method \code{info()}}{
 Retrieve metadata about the java and photon version used as well
-as the country and creation date of the Eleasticsearch search index.
+as the country and creation date of the search index.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{photon_local$info()}\if{html}{\out{</div>}}
 }
@@ -172,6 +185,21 @@ as the country and creation date of the Eleasticsearch search index.
 \subsection{Returns}{
 A list containing the java version, the photon version, and
 if applicable, the spatial and temporal coverage of the search index.
+}
+}
+\if{html}{\out{<hr>}}
+\if{html}{\out{<a id="method-photon_local-help"></a>}}
+\if{latex}{\out{\hypertarget{method-photon_local-help}{}}}
+\subsection{Method \code{help()}}{
+Print the default arguments to the R console. This can be helpful to
+get a list of additional photon arguments for \code{$start()} or
+\code{$import()}.
+\subsection{Usage}{
+\if{html}{\out{<div class="r">}}\preformatted{photon_local$help()}\if{html}{\out{</div>}}
+}
+
+\subsection{Returns}{
+Nothing, but prints to the console.
 }
 }
 \if{html}{\out{<hr>}}
@@ -269,12 +297,12 @@ a JSON file and returns the path to the output file. Defaults to
 \item{\code{timeout}}{Time in seconds before the java process aborts. Defaults
 to 60 seconds.}
 
-\item{\code{java_opts}}{List of further flags passed on to the \code{java}
-command.}
+\item{\code{java_opts}}{Character vector of further flags passed on to the
+\code{java} command.}
 
-\item{\code{photon_opts}}{List of further flags passed on to the photon
-jar in the java command. See \code{\link{cmd_options}} for a helper
-function to import external Nominatim databases.}
+\item{\code{photon_opts}}{Character vector of further flags passed on to the
+photon jar in the java command. See \code{\link{cmd_options}} for a
+helper function.}
 }
 \if{html}{\out{</div>}}
 }
@@ -310,21 +338,20 @@ Defaults to \code{FALSE}.}
 \item{\code{timeout}}{Time in seconds before the java process aborts. Defaults
 to 60 seconds.}
 
-\item{\code{java_opts}}{List of further flags passed on to the \code{java}
-command.}
+\item{\code{java_opts}}{Character vector of further flags passed on to the
+\code{java} command.}
 
-\item{\code{photon_opts}}{List of further flags passed on to the photon
-jar in the java command. See \code{\link{cmd_options}} for a helper
-function to import external Nominatim databases.}
+\item{\code{photon_opts}}{Character vector of further flags passed on to the
+photon jar in the java command. See \code{\link{cmd_options}} for a
+helper function.}
 }
 \if{html}{\out{</div>}}
 }
 \subsection{Details}{
 While there is a certain way to determine if a photon instance is
 ready, there is no clear way as of yet to determine if a photon setup
-has failed. Due to this, a failing setup is mostly indicated by the
-setup hanging after emitting a warning. In this case, the setup has to
-be interrupted manually.
+has failed. Due to this, a failing setup may sometimes hang instead of
+emitting an error. In this case, please open a bug report.
 }
 
 }
@@ -345,10 +372,10 @@ Kills the running photon process.
 Downloads a search index using \code{\link{download_searchindex}}.
 \subsection{Usage}{
 \if{html}{\out{<div class="r">}}\preformatted{photon_local$download_data(
-  country = NULL,
+  country,
   date = "latest",
   exact = FALSE,
-  section = NULL
+  section = "experimental"
 )}\if{html}{\out{</div>}}
 }
 
@@ -357,7 +384,8 @@ Downloads a search index using \code{\link{download_searchindex}}.
 \describe{
 \item{\code{country}}{Character string that can be identified by
 \code{\link[countrycode]{countryname}} as a country. An extract for this
-country will be downloaded. If \code{NULL}, downloads a global search index.}
+country will be downloaded. If \code{"planet"}, downloads a global search
+index.}
 
 \item{\code{date}}{Character string or date-time object used to specify the creation
 date of the search index. If \code{"latest"}, will download the file tagged

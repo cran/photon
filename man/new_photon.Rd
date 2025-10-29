@@ -12,7 +12,8 @@ new_photon(
   date = "latest",
   exact = FALSE,
   section = NULL,
-  opensearch = FALSE,
+  opensearch = TRUE,
+  mount = TRUE,
   overwrite = FALSE,
   quiet = FALSE
 )
@@ -34,7 +35,9 @@ version.}
 
 \item{country}{Character string that can be identified by
 \code{\link[countrycode]{countryname}} as a country. An extract for this
-country will be downloaded. If \code{NULL}, downloads a global search index.}
+country will be downloaded. If \code{"planet"}, downloads a global search
+index. If \code{NULL}, downloads no index and leaves download or import to
+the user.}
 
 \item{date}{Character string or date-time object used to specify the creation
 date of the search index. If \code{"latest"}, will download the file tagged
@@ -53,11 +56,18 @@ version of photon. If \code{"archived"}, selects a dump made for an older
 version of photon. If \code{NULL} (or any arbitrary string), selects a
 dump made for the current release. Defaults to \code{NULL}.}
 
-\item{opensearch}{If \code{TRUE}, looks for an OpenSearch version of
-photon in the specified path. Opensearch-based photon supports structured
-geocoding queries but is currently only experimental. Defaults to
-\code{FALSE}. See \code{vignette("nominatim-import", package = "photon")}
-for details.}
+\item{opensearch}{If \code{TRUE}, attempts to download the OpenSearch
+version of photon. OpenSearch-based photon supports structrued geocoding.
+Readily available OpenSearch photon executables are only offered since
+photon version 0.6.0. For earlier versions, you need to build it from
+source using gradle. In this case, if \code{TRUE}, will look for an
+OpenSearch version of photon in the specified path. Since photon version
+0.7.0, OpenSearch is the recommended option. Defaults to \code{TRUE}.}
+
+\item{mount}{If \code{TRUE}, mounts the object to the session so that
+functions like \code{\link{geocode}} automatically detect the new
+instance. If \code{FALSE}, initializies the instance but doesn't mount
+it to the session. Defaults to \code{TRUE}.}
 
 \item{overwrite}{If \code{TRUE}, overwrites existing jar files and
 search indices when initializing a new instance. Defaults to
@@ -82,10 +92,13 @@ the setup of the photon executable, a search index, and Java. See
 photon <- new_photon()
 
 # connect to arbitrary server
-photon <- new_photon(url = "photonserver.org")
+photon <- new_photon(url = "https://photonserver.org")
 
 if (has_java("11")) {
-# set up a local instance in the current working directory
-photon <- new_photon("photon", country = "Monaco")
+# set up a local instance in a temporary directory
+dir <- file.path(tempdir(), "photon")
+photon <- new_photon(dir, country = "Monaco")
 }
+
+photon$purge(ask = FALSE)
 }

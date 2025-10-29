@@ -21,7 +21,7 @@
 #' photon <- new_photon()
 #'
 #' # works with sf objects
-#' sf_data <- sf::st_sfc(sf::st_point(c(8, 52)), sf::st_point(c(7, 52)))
+#' sf_data <- sf::st_sfc(sf::st_point(c(8, 52)), sf::st_point(c(7, 52)), crs = 4326)
 #' reverse(sf_data)
 #'
 #' # ... but also with simple dataframes
@@ -58,7 +58,7 @@ reverse <- function(.data,
   options <- list(env = environment())
 
   if (progress) {
-    cli::cli_progress_bar(name = "Geocoding", total = length(query))
+    cli::cli_progress_bar(name = "Geocoding", total = nrow(query))
   }
 
   query$i <- seq_len(nrow(query))
@@ -87,6 +87,8 @@ reverse_impl <- function(i, ..., env) {
 format_points <- function(.data) {
   if (inherits(.data, c("sf", "sfc"))) {
     check_geometry(.data, type = "POINT")
+    check_crs(.data)
+    .data <- sf::st_transform(.data, 4326)
     .data <- sf::st_coordinates(.data)
     .data <- data.frame(lon = .data[, "X"], lat = .data[, "Y"])
   } else {
@@ -108,5 +110,14 @@ check_geometry <- function(x, type = "POINT") {
       "{.code {var}} must consist of {type}s only, got {geom} instead.",
       class = "check_geometry"
     )
+  }
+}
+
+
+check_crs <- function(x) {
+  cond <- !is.na(sf::st_crs(x))
+  if (!cond) {
+    var <- deparse(substitute(x))
+    ph_stop("{.code {var}} must have a CRS (`?sf::st_crs`).")
   }
 }
