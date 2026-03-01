@@ -195,6 +195,11 @@ latinize <- function(x, encoding = "latin1") {
 }
 
 
+to_title <- function(x) {
+  gsub("\\b([[:alpha:]])([[:alpha:]]+)", "\\U\\1\\L\\2", x, perl = TRUE)
+}
+
+
 is_online <- function(host) { # nocov start
   req <- httr2::request(host)
   req <- httr2::req_method(req, "HEAD")
@@ -204,3 +209,18 @@ is_online <- function(host) { # nocov start
     httr2::resp_status(resp) == 200
   }, error = function(e) FALSE)
 } # nocov end
+
+
+photon_run_examples <- function() {
+  isTRUE(as.logical(Sys.getenv("PHOTON_RUN_EXAMPLES", FALSE))) # nocov
+}
+
+
+deprecated <- function(what, when, where) {
+  if (!is.null(what)) { # nocov start
+    ph_stop(c(
+      "{what} is deprecated since v{when}.",
+      "i" = where
+    ))
+  } # nocov end
+}

@@ -8,14 +8,12 @@ new_photon(
   path = NULL,
   url = NULL,
   photon_version = NULL,
-  country = NULL,
-  date = "latest",
-  exact = FALSE,
-  section = NULL,
+  region = NULL,
   opensearch = TRUE,
   mount = TRUE,
   overwrite = FALSE,
-  quiet = FALSE
+  quiet = FALSE,
+  country = NULL
 )
 }
 \arguments{
@@ -33,40 +31,22 @@ releases can be found here: \url{https://github.com/komoot/photon/releases/}.
 Ignored if \code{jar} is given. If \code{NULL}, uses the latest known
 version.}
 
-\item{country}{Character string that can be identified by
-\code{\link[countrycode]{countryname}} as a country. An extract for this
-country will be downloaded. If \code{"planet"}, downloads a global search
-index. If \code{NULL}, downloads no index and leaves download or import to
-the user.}
+\item{region}{Character string that identifies a region or country. An
+extract for this region will be downloaded. If \code{"planet"}, downloads
+a global extract (see note). Run \code{list_regions()} to get an overview
+of available regions. You can specify countries using any code that can
+be translated by \code{\link[countrycode]{countrycode}}.}
 
-\item{date}{Character string or date-time object used to specify the creation
-date of the search index. If \code{"latest"}, will download the file tagged
-with "latest". If a character string, the value should be parseable by
-\code{\link{as.POSIXct}}. If \code{exact = FALSE}, the input value is
-compared to all available dates and the closest date will be selected.
-Otherwise, a file will be selected that exactly matches the input to
-\code{date}.}
-
-\item{exact}{If \code{TRUE}, exactly matches the \code{date}. Otherwise,
-selects the date with lowest difference to the \code{date} parameter.}
-
-\item{section}{Subdirectory of the download server from which to select a
-search index. If \code{"experimental"}, selects a dump made for the master
-version of photon. If \code{"archived"}, selects a dump made for an older
-version of photon. If \code{NULL} (or any arbitrary string), selects a
-dump made for the current release. Defaults to \code{NULL}.}
-
-\item{opensearch}{If \code{TRUE}, attempts to download the OpenSearch
-version of photon. OpenSearch-based photon supports structrued geocoding.
-Readily available OpenSearch photon executables are only offered since
-photon version 0.6.0. For earlier versions, you need to build it from
-source using gradle. In this case, if \code{TRUE}, will look for an
-OpenSearch version of photon in the specified path. Since photon version
-0.7.0, OpenSearch is the recommended option. Defaults to \code{TRUE}.}
+\item{opensearch}{Deprecated for photon versions >= 1.0.0 and superseded
+for photon versions >= 0.7.0. If \code{TRUE},
+attempts to download the OpenSearch version of photon. OpenSearch-based
+photon supports structured geocoding. If \code{FALSE}, falls back to
+ElasticSearch. Since photon 0.7.0, OpenSearch is the default and since
+1.0.0, ElasticSearch is not supported anymore.}
 
 \item{mount}{If \code{TRUE}, mounts the object to the session so that
 functions like \code{\link{geocode}} automatically detect the new
-instance. If \code{FALSE}, initializies the instance but doesn't mount
+instance. If \code{FALSE}, initializes the instance but doesn't mount
 it to the session. Defaults to \code{TRUE}.}
 
 \item{overwrite}{If \code{TRUE}, overwrites existing jar files and
@@ -74,6 +54,8 @@ search indices when initializing a new instance. Defaults to
 \code{FALSE}.}
 
 \item{quiet}{If \code{TRUE}, suppresses all informative messages.}
+
+\item{country}{Deprecated since photon 1.0.0. Use \code{region} instead.}
 }
 \value{
 An R6 object of class \code{photon}.
@@ -88,6 +70,7 @@ the setup of the photon executable, a search index, and Java. See
 \code{\link{photon_local}} for details.
 }
 \examples{
+\dontshow{if (getFromNamespace("is_online", "photon")("graphhopper.com") && getFromNamespace("photon_run_examples", "photon")()) withAutoprint(\{ # examplesIf}
 # connect to public API
 photon <- new_photon()
 
@@ -95,10 +78,10 @@ photon <- new_photon()
 photon <- new_photon(url = "https://photonserver.org")
 
 if (has_java("11")) {
-# set up a local instance in a temporary directory
-dir <- file.path(tempdir(), "photon")
-photon <- new_photon(dir, country = "Monaco")
+  # set up a local instance in a temporary directory
+  dir <- file.path(tempdir(), "photon")
+  photon <- new_photon(dir, region = "Andorra")
+  photon$purge(ask = FALSE)
 }
-
-photon$purge(ask = FALSE)
+\dontshow{\}) # examplesIf}
 }

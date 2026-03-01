@@ -10,7 +10,7 @@ library(photon)
 ## ----eval=FALSE---------------------------------------------------------------
 # opts <- cmd_options(
 #   e = "PBF_URL=https://download.geofabrik.de/australia-oceania/samoa-latest.osm.pbf",
-#   e = "NOMINATIM_PASSWORD=MNdtC2*pP#aMbe",
+#   e = "NOMINATIM_PASSWORD=mypassword",
 #   e = "FREEZE=true",
 #   p = "8080:8080",
 #   p = "5432:5432",
@@ -19,7 +19,24 @@ library(photon)
 #   use_double_hyphens = TRUE
 # )
 # 
+# # Note: on Windows, make sure you have Docker Desktop running!
 # nominatim <- process$new("docker", c("run", opts))
+# 
+# # Wait until Nominatim is ready
+# ready <- FALSE
+# while (!ready) {
+#   Sys.sleep(5)
+#   logs <- run("docker", c("logs", "nominatim"))
+#   ready <- any(grepl("ready to accept requests", logs))
+# }
+# 
+# run(
+#   "docker",
+#   c(
+#     "exec", "--user", "postgres", "nominatim", "psql", "-d", "nominatim", "-c",
+#     "ALTER USER nominatim WITH ENCRYPTED PASSWORD 'mypassword'"
+#   )
+# )
 
 ## ----eval=FALSE---------------------------------------------------------------
 # library(RPostgres)
@@ -57,19 +74,11 @@ library(photon)
 # #> ℹ java version "22" 2024-03-19
 # #> ℹ Java(TM) SE Runtime Environment (build 22+36-2370)
 # #> ℹ Java HotSpot(TM) 64-Bit Server VM (build 22+36-2370, mixed mode, sharing)
-# #> ✔ Successfully downloaded photon 0.6.2. [8.2s]
+# #> ✔ Successfully downloaded photon 1.0.0. [8.2s]
 # #> ℹ No search index downloaded! Download one or import from a Nominatim database.
-# #> • Version: 0.6.2
+# #> • Version: 1.0.0
 # 
 # photon$import(host = "localhost", password = "MNdtC2*pP#aMbe")
-# #> 2024-10-24 23:07:35,904 [main] WARN  org.elasticsearch.node.Node - version [5.6.16-SNAPSHOT] is a pre-release version of Elasticsearch and is not suitable for production
-# #> 2024-10-24 23:07:43,326 [main] INFO  de.komoot.photon.elasticsearch.Server - Started elastic search node
-# #> 2024-10-24 23:07:43,326 [main] INFO  de.komoot.photon.App - Make sure that the ES cluster is ready, this might take some time.
-# #> 2024-10-24 23:07:43,905 [main] INFO  de.komoot.photon.App - ES cluster is now ready.
-# #> 2024-10-24 23:07:45,299 [main] INFO  de.komoot.photon.App - Starting import from nominatim to photon with languages: en,fr,de,it
-# #> 2024-10-24 23:07:45,300 [main] INFO  de.komoot.photon.nominatim.NominatimConnector - Start importing documents from nominatim (global)
-# #> 2024-10-24 23:07:59,080 [main] INFO  de.komoot.photon.nominatim.ImportThread - Finished import of 2085 photon documents.
-# #> 2024-10-24 23:07:59,080 [main] INFO  de.komoot.photon.App - Imported data from nominatim to photon with languages: en,fr,de,it
 
 ## ----eval=FALSE---------------------------------------------------------------
 # photon$start()
@@ -92,35 +101,9 @@ library(photon)
 # #> # ℹ 1 more variable: geometry <POINT [°]>
 
 ## ----eval=FALSE---------------------------------------------------------------
-# # set opensearch = TRUE to use OpenSearch photon
-# photon <- new_photon(dir, opensearch = TRUE, quiet = TRUE)
-# 
-# # set structured = TRUE to enable structured geocoding
-# photon$import(host = "localhost", password = "MNdtC2*pP#aMbe", structured = TRUE)
+# photon$remove_data()
+# photon$download_data("Andorra", json = TRUE)
 
 ## ----eval=FALSE---------------------------------------------------------------
-# photon$start()
-# has_structured_support()
-# #> [1] TRUE
-
-## ----eval=FALSE---------------------------------------------------------------
-# place_data <- data.frame(
-#   housenumber = c(NA, "77C", NA),
-#   street = c("Falealilli Cross Island Road", "Main Beach Road", "Le Mafa Pass Road"),
-#   state = c("Tuamasaga", "Tuamasaga", "Atua")
-# )
-# 
-# structured(place_data)
-# #> Simple feature collection with 3 features and 14 fields
-# #> Geometry type: POINT
-# #> Dimension:     XY
-# #> Bounding box:  xmin: -171.7759 ymin: -14.04544 xmax: -171.451 ymax: -13.8338
-# #> Geodetic CRS:  WGS 84
-# #> # A tibble: 3 × 15
-# #>     idx osm_type    osm_id country osm_key  city      countrycode osm_value name    state type  extent housenumber street
-# #>   <int> <chr>        <int> <chr>   <chr>    <chr>     <chr>       <chr>     <chr>   <chr> <chr> <list> <chr>       <chr>
-# #> 1     1 W        319147189 Samoa   highway  Siumu Uta WS          primary   Faleal… Tuam… stre… <dbl>  NA          NA
-# #> 2     2 W        569855981 Samoa   building Apia      WS          yes       NA      Tuam… house <dbl>  77C         Main …
-# #> 3     3 W         40681149 Samoa   highway  Lalomanu  WS          primary   Main S… Ātua  stre… <dbl>  NA          NA
-# #> # ℹ 1 more variable: geometry <POINT [°]>
+# photon$import(json = TRUE)
 

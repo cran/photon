@@ -39,6 +39,9 @@ reverse <- function(.data,
                     locbias = NULL,
                     locbias_scale = NULL,
                     zoom = NULL,
+                    dedupe = TRUE,
+                    include = NULL,
+                    exclude = NULL,
                     distance_sort = TRUE,
                     progress = interactive()) {
   assert_vector(radius, "numeric", null = TRUE)
@@ -48,12 +51,18 @@ reverse <- function(.data,
   assert_vector(layer, "character", null = TRUE)
   assert_vector(locbias_scale, "numeric", size = 1, null = TRUE)
   assert_vector(zoom, "numeric", size = 1, null = TRUE)
+  assert_vector(include, "character", null = TRUE)
+  assert_vector(exclude, "character", null = TRUE)
   assert_range(locbias_scale, min = 0, max = 1, than = FALSE)
   assert_range(radius, 0, 5000)
+  assert_flag(dedupe)
+  assert_flag(distance_sort)
   assert_flag(progress)
   progress <- progress && globally_enabled("photon_movers")
 
   query <- format_points(.data)
+  include <- format_csv(include)
+  exclude <- format_csv(exclude)
   gids <- group_id(query)
   options <- list(env = environment())
 
@@ -79,7 +88,11 @@ reverse_impl <- function(i, ..., env) {
     lon = env$locbias$lon,
     lat = env$locbias$lat,
     location_bias_scale = env$locbias_scale,
-    zoom = env$zoom
+    zoom = env$zoom,
+    dedupe = env$dedupe,
+    include = env$include,
+    exclude = env$exclue,
+    distance_sort = env$distance_sort
   )
 }
 
@@ -118,6 +131,9 @@ check_crs <- function(x) {
   cond <- !is.na(sf::st_crs(x))
   if (!cond) {
     var <- deparse(substitute(x))
-    ph_stop("{.code {var}} must have a CRS (`?sf::st_crs`).")
+    ph_stop(
+      "{.code {var}} must have a CRS (`?sf::st_crs`).",
+      class = "check_crs"
+    )
   }
 }

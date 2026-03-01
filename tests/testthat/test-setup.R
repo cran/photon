@@ -3,7 +3,6 @@ test_that("remote photons work", {
   expect_error(get_instance(), class = "instance_missing")
   photon <- new_photon()
   expect_true(is_komoot(photon$get_url()))
-  expect_error(structured(), regexp = "disabled")
   photon <- new_photon(url = "https://test.org")
   expect_equal(photon$get_url(), "https://test.org")
 })
@@ -46,30 +45,28 @@ test_that("logs can be parsed", {
   expect_true(sum(vapply(logs, FUN.VALUE = logical(1), \(x) all(is.na(x)))) == 1)
 })
 
-test_that("search indices are matched", {
+test_that("databases are matched", {
   skip_if_offline("graphhopper.com")
-  de_latest <- download_searchindex(only_url = TRUE, country = "Germany")
-  expect_equal(basename(de_latest), "photon-db-de-latest.tar.bz2")
-  global_latest <- download_searchindex(only_url = TRUE, country = "planet")
-  expect_equal(basename(global_latest), "photon-db-latest.tar.bz2")
-  global_time <- download_searchindex(only_url = TRUE, date = Sys.Date(), country = "Monaco")
-  expect_match(basename(global_time), "photon-db-mc-[0-9]+\\.tar\\.bz2")
+  de_latest <- download_database(only_url = TRUE, region = "Germany")
+  expect_equal(basename(de_latest), "photon-db-germany-1.0-latest.tar.bz2")
+  na_latest <- download_database(only_url = TRUE, region = "North America")
+  expect_equal(basename(na_latest), "photon-db-north-america-1.0-latest.tar.bz2")
+  global_latest <- download_database(only_url = TRUE, region = "planet")
+  expect_equal(basename(global_latest), "photon-db-planet-1.0-latest.tar.bz2")
   expect_error(
-    download_searchindex(only_url = TRUE, date = Sys.Date(), exact = TRUE, country = "Monaco"),
-    class = "no_index_match"
-  )
-  expect_error(
-    download_searchindex(only_url = TRUE, country = "not a country"),
+    download_database(only_url = TRUE, region = "not a country"),
     class = "country_invalid"
   )
 })
 
-test_that("search index download signals a useful error", {
-  skip_if_offline("graphhopper.com")
-  expect_error(
-    download_searchindex(country = "Vatican"),
-    regexp = "Vatican City is not available"
-  )
+test_that("databases can be explored", {
+  reg1 <- list_regions()
+  reg2 <- list_regions("europe")
+
+  expect_named(reg1, c("region", "has_db_dump", "countries"))
+  expect_gt(nrow(reg1), 1)
+  expect_named(reg2, c("region", "has_db_dump", "countries"))
+  expect_gt(nrow(reg2), 1)
 })
 
 test_that("opensearch is denied when unsupported", {
@@ -88,14 +85,14 @@ describe("photon_local", {
   options(photon_setup_warn = FALSE)
   on.exit(options(photon_setup_warn = NULL), add = TRUE)
   dir <- file.path(tempdir(), "photon")
-  photon <- new_photon(path = dir, country = "monaco")
+  photon <- new_photon(path = dir, region = "andorra")
   on.exit(photon$purge(ask = FALSE), add = TRUE)
 
   it("can print", {
     expect_no_error(print(photon))
   })
 
-  photon <- new_photon(path = dir, country = "monaco")
+  photon <- new_photon(path = dir, region = "andorra")
 
   it("can suppress verbosity", {
     expect_no_message(new_photon(path = dir, quiet = TRUE))
@@ -114,6 +111,7 @@ describe("photon_local", {
   it("can start", {
     photon$start(host = "127.0.0.1")
     expect_true(photon$is_running())
+    expect_named(photon$status())
     expect_false(anyNA(geocode("Monte Carlo")$osm_id))
     expect_error(photon$start(host = "127.0.0.1"), class = "photon_already_running")
   })
@@ -146,6 +144,7 @@ describe("photon_local", {
     expect_error(photon$import(), class = "import_error")
     logs <- photon$get_logs()
     expect_equal(unique(logs$rid), c(1, 2))
+    expect_error(photon$import(json = TRUE), class = "import_no_json")
   })
 
   it("intercepts usage errors correctly", {
@@ -165,12 +164,12 @@ describe("photon_local", {
   })
 
   it("can run help", {
-    expect_output(photon$help(), regexp = "Usage: <main class>")
+    expect_output(photon$help(), regexp = "Usage: photon")
   })
 
   it("can download data manually", {
     photon$remove_data()
-    photon$download_data("monaco")
+    photon$download_data("andorra")
     photon$start(host = "127.0.0.1")
     photon$stop()
   })
