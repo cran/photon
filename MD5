@@ -1,4 +1,4 @@
-9ecb3f349a2969f1daa60df7ee6657b5 *DESCRIPTION
+360424ccf7774841077778b7d2981a8b *DESCRIPTION
 9c6eec2c1b5755a5b67872e7be4a4256 *NAMESPACE
 b4f386d969f84ca2768f7aa0534c6651 *NEWS.md
 05578a43e3a8114152cac8f09f79c014 *R/assert.R
@@ -26,7 +26,7 @@ adb6152b2564ed5f6e4d452a3ff5233b *inst/doc/nominatim-import.Rmd
 d075d4a7e6a9ffa31a044b4a2ad5eac0 *inst/doc/nominatim-import.html
 47e540c5028fb00d5bf6911c831b6b32 *inst/doc/photon.R
 afa2eb4d99374b7f1405552532acab86 *inst/doc/photon.Rmd
-53c443d8e0c8efaf03e1f12ee977f32e *inst/doc/photon.html
+bf0cbd65ed41c253c5157ca7fe32d2f8 *inst/doc/photon.html
 0e720f26bea9ae17bd2ca31a7713405a *man/cmd_options.Rd
 0b2601b33312c3c349bd2fb09ff16d48 *man/download_database.Rd
 1afb9a3d5cc94c45927892dd395180eb *man/download_photon.Rd
@@ -48,6 +48,6 @@ b65fb550f6258620fafefbd097601cbb *man/structured.Rd
 73195e9bf0a616392c128ad5359127c6 *tests/testthat/fixtures/log_opensearch.txt
 11bbad28988c7616d8ae17e4489c11ce *tests/testthat/test-geocode.R
 f40709ed8632fcf994bc0517a62a21d5 *tests/testthat/test-setup.R
-352031ff88f90526d1e39c2508fc8b82 *tests/testthat/test-utils.R
+349fb78bf367716617b5ee630d8642a1 *tests/testthat/test-utils.R
 adb6152b2564ed5f6e4d452a3ff5233b *vignettes/nominatim-import.Rmd
 afa2eb4d99374b7f1405552532acab86 *vignettes/photon.Rmd

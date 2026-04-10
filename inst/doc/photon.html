@@ -411,10 +411,10 @@ structured geocoding can be a little more precise.</p>
 <span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="co">#&gt; Bounding box:  xmin: -93.09825 ymin: 43.70718 xmax: -93.09825 ymax: 43.70718</span></span>
 <span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="co">#&gt; Geodetic CRS:  WGS 84</span></span>
 <span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="co">#&gt; # A tibble: 1 × 13</span></span>
-<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt;     idx osm_type   osm_id osm_key osm_value type  countrycode name  county state</span></span>
-<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt;   &lt;int&gt; &lt;chr&gt;       &lt;int&gt; &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt; &lt;chr&gt;       &lt;chr&gt; &lt;chr&gt;  &lt;chr&gt;</span></span>
-<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; 1     1 R        19843371 place   village   city  US          Mosc… Freeb… Minn…</span></span>
-<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt; # ℹ 3 more variables: country &lt;chr&gt;, extent &lt;list&gt;, geometry &lt;POINT [°]&gt;</span></span></code></pre></div>
+<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="co">#&gt;     idx osm_type   osm_id osm_key osm_value type  name      county state country</span></span>
+<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="co">#&gt;   &lt;int&gt; &lt;chr&gt;       &lt;int&gt; &lt;chr&gt;   &lt;chr&gt;     &lt;chr&gt; &lt;chr&gt;     &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;  </span></span>
+<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="co">#&gt; 1     1 R        19843371 place   village   city  Moscow T… Freeb… Minn… United…</span></span>
+<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="co">#&gt; # ℹ 3 more variables: countrycode &lt;chr&gt;, extent &lt;list&gt;, geometry &lt;POINT [°]&gt;</span></span></code></pre></div>
 <p>Online geocoding is nice and it is most likely what you need for
 basic tasks. But what if online geocoding is not enough? What if you
 need to geocode a dataset of 200,000 places? What if you need to geocode
